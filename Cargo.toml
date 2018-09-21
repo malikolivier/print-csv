@@ -6,3 +6,4 @@ authors = ["Malik Olivier Boussejra <malik@boussejra.com>"]
 [dependencies]
 clap = "2"
 csv = "1"
+icu-sys = { git = "https://github.com/servo/rust-icu" }
