@@ -42,7 +42,7 @@ fn read_csv<R: io::Read>(buf: &mut R) -> Result<(), Box<Error>> {
     let headers = rdr.headers()?.clone();
     let mut cols: Vec<_> = headers.iter().map(|header| header.len()).collect();
 
-    const BUFFER_SIZE: usize = 1000;
+    const BUFFER_SIZE: usize = 3000;
     let mut buffer = Vec::with_capacity(BUFFER_SIZE);
 
     for result in rdr.records().take(BUFFER_SIZE) {
