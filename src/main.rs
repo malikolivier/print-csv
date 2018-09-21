@@ -1,6 +1,9 @@
 extern crate clap;
 extern crate csv;
-extern crate icu_sys;
+#[macro_use]
+extern crate lazy_static;
+
+mod cjk;
 
 use std::cmp;
 use std::error::Error;
@@ -81,17 +84,5 @@ fn write_record(record: &csv::StringRecord, cols: &[usize]) {
 fn terminal_length(string: &str) -> usize {
     string
         .chars()
-        .fold(0, |acc, c| acc + if is_fullwidth(c) { 2 } else { 1 })
-}
-
-/// https://stackoverflow.com/questions/15114303/determine-whether-a-unicode-character-is-fullwidth-or-halfwidth-in-c
-/// bool is_fullwidth(UChar32 c) {
-///     int width = u_getIntPropertyValue(c, UCHAR_EAST_ASIAN_WIDTH);
-///     return width == U_EA_FULLWIDTH || width == U_EA_WIDE;
-/// }
-fn is_fullwidth(c: char) -> bool {
-    let width = unsafe {
-        icu_sys::uchar::u_getIntPropertyValue_52(c as i32, icu_sys::uchar::UCHAR_EAST_ASIAN_WIDTH)
-    } as u32;
-    width == icu_sys::uchar::U_EA_FULLWIDTH || width == icu_sys::uchar::U_EA_WIDE
+        .fold(0, |acc, c| acc + if cjk::is_fullwidth(c) { 2 } else { 1 })
 }
