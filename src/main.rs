@@ -38,13 +38,7 @@ fn read_csv<R: io::Read>(buf: &mut R) -> Result<(), Box<Error>> {
     let headers = rdr.headers()?.clone();
     let mut cols: Vec<_> = headers.iter().map(|header| header.len()).collect();
 
-    for (i, field) in headers.iter().enumerate() {
-        print!("\"{}\"", field);
-        for _ in field.len()..(cols[i] + 2) {
-            print!(" ");
-        }
-    }
-    println!("");
+    write_record(&headers, &cols);
 
     for result in rdr.records() {
         // The iterator yields Result<StringRecord, Error>, so we check the
@@ -58,13 +52,17 @@ fn read_csv<R: io::Read>(buf: &mut R) -> Result<(), Box<Error>> {
             cols[i] = cmp::max(cols[i], field.len());
         }
 
-        for (i, field) in record.iter().enumerate() {
-            print!("\"{}\"", field);
-            for _ in field.len()..(cols[i] + 2) {
-                print!(" ");
-            }
-        }
-        println!("");
+        write_record(&record, &cols);
     }
     Ok(())
+}
+
+fn write_record(record: &csv::StringRecord, cols: &[usize]) {
+    for (i, field) in record.iter().enumerate() {
+        print!("\"{}\"", field);
+        for _ in field.len()..(cols[i] + 2) {
+            print!(" ");
+        }
+    }
+    println!("");
 }
