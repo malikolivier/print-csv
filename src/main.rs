@@ -13,39 +13,16 @@ use clap::{App, Arg};
 use unicode_width::UnicodeWidthChar;
 
 fn main() -> Result<(), Box<Error>> {
-    let istty = unsafe { libc::isatty(libc::STDOUT_FILENO as i32) } != 0;
-    if istty {
-        let mut less = Command::new("less")
-            .stdin(Stdio::piped())
-            .arg("-S")
-            .spawn()
-            .expect("Could not run less!");
-
-        {
-            let less_in = less.stdin.as_mut().unwrap();
-            run(less_in)?;
-        }
-
-        less.wait().expect("Failed to wait on child");
-    } else {
-        let stdout = io::stdout();
-        let mut handle = stdout.lock();
-        run(&mut handle)?;
-    }
-
-    Ok(())
-}
-
-fn run<W: io::Write>(out: &mut W) -> Result<(), Box<Error>> {
     let matches = App::new(env!("CARGO_PKG_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
         .arg(Arg::with_name("INPUT").help("Sets the csv file to read"))
         .get_matches();
+
     if let Some(input_file) = matches.value_of("INPUT") {
         match File::open(input_file) {
-            Ok(mut f) => read_csv(&mut f, out),
+            Ok(mut f) => run(&mut f),
             Err(e) => {
                 eprintln!("Error opening file '{}': {}", input_file, e);
                 process::exit(1)
@@ -59,9 +36,32 @@ fn run<W: io::Write>(out: &mut W) -> Result<(), Box<Error>> {
         } else {
             let mut stdin = io::stdin();
             let mut handle = stdin.lock();
-            read_csv(&mut handle, out)
+            run(&mut handle)
         }
     }
+}
+
+fn run<R: io::Read>(input: &mut R) -> Result<(), Box<Error>> {
+    let istty = unsafe { libc::isatty(libc::STDOUT_FILENO as i32) } != 0;
+    if istty {
+        let mut less = Command::new("less")
+            .stdin(Stdio::piped())
+            .arg("-S")
+            .spawn()
+            .expect("Could not run less!");
+
+        {
+            let less_in = less.stdin.as_mut().unwrap();
+            read_csv(input, less_in)?;
+        }
+
+        less.wait().expect("Failed to wait on child");
+    } else {
+        let stdout = io::stdout();
+        let mut handle = stdout.lock();
+        read_csv(input, &mut handle)?;
+    }
+    Ok(())
 }
 
 fn read_csv<R: io::Read, W: io::Write>(buf: &mut R, out: &mut W) -> Result<(), Box<Error>> {
