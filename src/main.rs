@@ -54,9 +54,15 @@ fn run<W: io::Write>(out: &mut W) -> Result<(), Box<Error>> {
             }
         }
     } else {
-        let mut stdin = io::stdin();
-        let mut handle = stdin.lock();
-        read_csv(&mut handle, out)
+        let istty = unsafe { libc::isatty(libc::STDIN_FILENO as i32) } != 0;
+        if istty {
+            println!("{}", matches.usage());
+            process::exit(1)
+        } else {
+            let mut stdin = io::stdin();
+            let mut handle = stdin.lock();
+            read_csv(&mut handle, out)
+        }
     }
 }
 
