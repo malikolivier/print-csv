@@ -1,10 +1,7 @@
 extern crate clap;
 extern crate csv;
-#[macro_use]
-extern crate lazy_static;
 extern crate libc;
-
-mod cjk;
+extern crate unicode_width;
 
 use std::cmp;
 use std::error::Error;
@@ -13,6 +10,7 @@ use std::io;
 use std::process::{self, Command, Stdio};
 
 use clap::{App, Arg};
+use unicode_width::UnicodeWidthChar;
 
 fn main() -> Result<(), Box<Error>> {
     let istty = unsafe { libc::isatty(libc::STDOUT_FILENO as i32) } != 0;
@@ -128,10 +126,8 @@ fn terminal_length(string: &str) -> usize {
     string.chars().fold(0, |acc, c| {
         acc + if c == '\t' {
             4
-        } else if cjk::is_fullwidth(c) {
-            2
         } else {
-            1
+            UnicodeWidthChar::width(c).unwrap_or(0)
         }
     })
 }
