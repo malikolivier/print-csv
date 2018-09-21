@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<Error>> {
             match File::open(input_file) {
                 Ok(mut f) => read_csv(&mut f, less_in)?,
                 Err(e) => {
-                    eprintln!("Error openign file '{}': {}", input_file, e);
+                    eprintln!("Error opening file '{}': {}", input_file, e);
                     process::exit(1)
                 }
             }
