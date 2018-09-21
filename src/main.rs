@@ -73,7 +73,15 @@ fn read_csv<R: io::Read>(buf: &mut R) -> Result<(), Box<Error>> {
 
 fn write_record(record: &csv::StringRecord, cols: &[usize]) {
     for (i, field) in record.iter().enumerate() {
-        print!("\"{}\"", field);
+        print!("\"");
+        for c in field.chars() {
+            if c == '\t' {
+                print!("    ");
+            } else {
+                print!("{}", c);
+            }
+        }
+        print!("\"");
         for _ in terminal_length(&field)..(cols[i] + 2) {
             print!(" ");
         }
@@ -82,7 +90,13 @@ fn write_record(record: &csv::StringRecord, cols: &[usize]) {
 }
 
 fn terminal_length(string: &str) -> usize {
-    string
-        .chars()
-        .fold(0, |acc, c| acc + if cjk::is_fullwidth(c) { 2 } else { 1 })
+    string.chars().fold(0, |acc, c| {
+        acc + if c == '\t' {
+            4
+        } else if cjk::is_fullwidth(c) {
+            2
+        } else {
+            1
+        }
+    })
 }
