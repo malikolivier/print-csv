@@ -1,0 +1,8 @@
+[package]
+name = "print-csv"
+version = "0.1.0"
+authors = ["Malik Olivier Boussejra <malik@boussejra.com>"]
+
+[dependencies]
+clap = "2"
+csv = "1"
