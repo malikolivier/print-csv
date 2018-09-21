@@ -86,15 +86,17 @@ fn read_csv<R: io::Read, W: io::Write>(buf: &mut R, out: &mut W) -> Result<(), B
         buffer.push(record.clone());
     }
 
-    write_record(&headers, &cols, out)?;
+    let mut out_buf = io::BufWriter::new(out);
+
+    write_record(&headers, &cols, &mut out_buf)?;
     for record in buffer {
-        write_record(&record, &cols, out)?;
+        write_record(&record, &cols, &mut out_buf)?;
     }
 
     for result in rdr.records() {
         let record = result?;
 
-        write_record(&record, &cols, out)?;
+        write_record(&record, &cols, &mut out_buf)?;
     }
     Ok(())
 }
