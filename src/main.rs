@@ -1,6 +1,7 @@
 extern crate clap;
 extern crate csv;
 
+use std::cmp;
 use std::error::Error;
 use std::fs::File;
 use std::io;
@@ -33,11 +34,37 @@ fn main() -> Result<(), Box<Error>> {
 
 fn read_csv<R: io::Read>(buf: &mut R) -> Result<(), Box<Error>> {
     let mut rdr = csv::Reader::from_reader(buf);
+
+    let headers = rdr.headers()?.clone();
+    let mut cols: Vec<_> = headers.iter().map(|header| header.len()).collect();
+
+    for (i, field) in headers.iter().enumerate() {
+        print!("\"{}\"", field);
+        for _ in field.len()..(cols[i] + 2) {
+            print!(" ");
+        }
+    }
+    println!("");
+
     for result in rdr.records() {
         // The iterator yields Result<StringRecord, Error>, so we check the
         // error here.
         let record = result?;
-        println!("{:?}", record);
+        while cols.len() < record.len() {
+            cols.push(0);
+        }
+
+        for (i, field) in record.iter().enumerate() {
+            cols[i] = cmp::max(cols[i], field.len());
+        }
+
+        for (i, field) in record.iter().enumerate() {
+            print!("\"{}\"", field);
+            for _ in field.len()..(cols[i] + 2) {
+                print!(" ");
+            }
+        }
+        println!("");
     }
     Ok(())
 }
