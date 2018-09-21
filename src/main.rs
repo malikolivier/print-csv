@@ -54,7 +54,7 @@ fn run<W: io::Write>(out: &mut W) -> Result<(), Box<Error>> {
     } else {
         let istty = unsafe { libc::isatty(libc::STDIN_FILENO as i32) } != 0;
         if istty {
-            println!("{}", matches.usage());
+            eprintln!("{}", matches.usage());
             process::exit(1)
         } else {
             let mut stdin = io::stdin();
