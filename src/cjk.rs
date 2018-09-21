@@ -15,7 +15,7 @@ enum EastAsianWidth {
     W,
 }
 
-const UTF8_MAX: usize = 0x110000;
+const UTF8_MAX: usize = 0x11_0000;
 
 lazy_static! {
     static ref RULES: [EastAsianWidth; UTF8_MAX] = {

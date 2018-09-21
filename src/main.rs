@@ -103,7 +103,7 @@ fn write_record<W: io::Write>(
             write!(out, " ")?;
         }
     }
-    write!(out, "\n")?;
+    writeln!(out)?;
     Ok(())
 }
 
