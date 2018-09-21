@@ -9,7 +9,7 @@ use std::cmp;
 use std::error::Error;
 use std::fs::File;
 use std::io;
-use std::process;
+use std::process::{self, Command, Stdio};
 
 use clap::{App, Arg};
 
@@ -21,22 +21,35 @@ fn main() -> Result<(), Box<Error>> {
         .arg(Arg::with_name("INPUT").help("Sets the csv file to read"))
         .get_matches();
 
-    if let Some(input_file) = matches.value_of("INPUT") {
-        match File::open(input_file) {
-            Ok(mut f) => read_csv(&mut f),
-            Err(e) => {
-                eprintln!("Error openign file '{}': {}", input_file, e);
-                process::exit(1)
+    let mut less = Command::new("less")
+        .stdin(Stdio::piped())
+        .arg("-S")
+        .spawn()
+        .expect("Could not run less!");
+
+    {
+        let less_in = less.stdin.as_mut().unwrap();
+
+        if let Some(input_file) = matches.value_of("INPUT") {
+            match File::open(input_file) {
+                Ok(mut f) => read_csv(&mut f, less_in)?,
+                Err(e) => {
+                    eprintln!("Error openign file '{}': {}", input_file, e);
+                    process::exit(1)
+                }
             }
-        }
-    } else {
-        let mut stdin = io::stdin();
-        let mut handle = stdin.lock();
-        read_csv(&mut handle)
+        } else {
+            let mut stdin = io::stdin();
+            let mut handle = stdin.lock();
+            read_csv(&mut handle, less_in)?
+        };
     }
+
+    less.wait().expect("Failed to wait on child");
+    Ok(())
 }
 
-fn read_csv<R: io::Read>(buf: &mut R) -> Result<(), Box<Error>> {
+fn read_csv<R: io::Read, W: io::Write>(buf: &mut R, out: &mut W) -> Result<(), Box<Error>> {
     let mut rdr = csv::Reader::from_reader(buf);
 
     let headers = rdr.headers()?.clone();
@@ -58,35 +71,40 @@ fn read_csv<R: io::Read>(buf: &mut R) -> Result<(), Box<Error>> {
         buffer.push(record.clone());
     }
 
-    write_record(&headers, &cols);
+    write_record(&headers, &cols, out)?;
     for record in buffer {
-        write_record(&record, &cols);
+        write_record(&record, &cols, out)?;
     }
 
     for result in rdr.records() {
         let record = result?;
 
-        write_record(&record, &cols);
+        write_record(&record, &cols, out)?;
     }
     Ok(())
 }
 
-fn write_record(record: &csv::StringRecord, cols: &[usize]) {
+fn write_record<W: io::Write>(
+    record: &csv::StringRecord,
+    cols: &[usize],
+    out: &mut W,
+) -> Result<(), Box<Error>> {
     for (i, field) in record.iter().enumerate() {
-        print!("\"");
+        write!(out, "\"")?;
         for c in field.chars() {
             if c == '\t' {
-                print!("    ");
+                write!(out, "    ")?;
             } else {
-                print!("{}", c);
+                write!(out, "{}", c)?;
             }
         }
-        print!("\"");
+        write!(out, "\"")?;
         for _ in terminal_length(&field)..(cols[i] + 2) {
-            print!(" ");
+            write!(out, " ")?;
         }
     }
-    println!("");
+    write!(out, "\n")?;
+    Ok(())
 }
 
 fn terminal_length(string: &str) -> usize {
