@@ -80,7 +80,7 @@ fn read_csv<R: io::Read, W: io::Write>(buf: &mut R, out: &mut W) -> Result<(), B
         }
 
         for (i, field) in record.iter().enumerate() {
-            cols[i] = cmp::max(cols[i], terminal_length(&field));
+            cols[i] = cmp::max(cols[i], terminal_length(field));
         }
 
         buffer.push(record.clone());
@@ -116,7 +116,7 @@ fn write_record<W: io::Write>(
             }
         }
         write!(out, "\"")?;
-        for _ in terminal_length(&field)..(cols[i] + 2) {
+        for _ in terminal_length(field)..(cols[i] + 2) {
             write!(out, " ")?;
         }
     }
