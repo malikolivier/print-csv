@@ -3,6 +3,7 @@ name = "print-csv"
 version = "0.1.0"
 authors = ["Malik Olivier Boussejra <malik@boussejra.com>"]
 description = "Print CSV files"
+license = "GPL-3.0"
 
 [dependencies]
 clap = "2"
